@@ -5,3 +5,6 @@ spring:
     password:
   jpa:
     show-sql: true
+api:
+  endpoint:
+    base-url: /api/v1

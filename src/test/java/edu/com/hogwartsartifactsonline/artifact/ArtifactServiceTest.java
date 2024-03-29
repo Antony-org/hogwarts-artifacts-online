@@ -1,6 +1,7 @@
 package edu.com.hogwartsartifactsonline.artifact;
 
 import edu.com.hogwartsartifactsonline.artifact.utils.IdWorker;
+import edu.com.hogwartsartifactsonline.system.exception.ObjectNotFoundException;
 import edu.com.hogwartsartifactsonline.wizard.Wizard;
 import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.AfterEach;
@@ -107,8 +108,8 @@ class ArtifactServiceTest {
         });
 
         // Then
-        assertThat(thrown).isInstanceOf(ArtifactNotFoundException.class).
-                hasMessage("Could not find an artifact with ID 1250808601744904192");
+        assertThat(thrown).isInstanceOf(ObjectNotFoundException.class).
+                hasMessage("Could not find artifact with Id 1250808601744904192");
 
         verify(artifactRepository, times(1)).findById("1250808601744904192");
     }
@@ -134,8 +135,8 @@ class ArtifactServiceTest {
         newArtifact.setDescription("desc");
         newArtifact.setImageUrl("ImageUrl");
 
-        given(idWorker.nextId()).willReturn(123456L);
-        given(artifactRepository.save(newArtifact)).willReturn(newArtifact);
+        given(this.idWorker.nextId()).willReturn(123456L);
+        given(this.artifactRepository.save(newArtifact)).willReturn(newArtifact);
 
         // When
         Artifact createdArtifact = artifactService.save(newArtifact);
@@ -158,7 +159,7 @@ class ArtifactServiceTest {
         oldArtifact.setImageUrl("ImageUrl");
 
         Artifact update = new Artifact();
-        update.setId("1250808601744904192");
+        //update.setId("1250808601744904192");
         update.setName("Invisibility Cloak");
         update.setDescription("new desc");
         update.setImageUrl("ImageUrl");
@@ -170,10 +171,10 @@ class ArtifactServiceTest {
         Artifact updatedArtifact = artifactService.update("1250808601744904192", update);
 
         //Then
-        assertThat(updatedArtifact.getId()).isEqualTo(update.getId());
+        assertThat(updatedArtifact.getId()).isEqualTo("1250808601744904192");
         assertThat(updatedArtifact.getDescription()).isEqualTo(update.getDescription());
         verify(artifactRepository, times(1)).save(oldArtifact);
-        verify(artifactRepository, times(1)).findById(update.getId());
+        verify(artifactRepository, times(1)).findById("1250808601744904192");
     }
 
     @Test
@@ -187,7 +188,7 @@ class ArtifactServiceTest {
         given(artifactRepository.findById("1250808601744904192")).willReturn(Optional.empty());
 
         //When
-        assertThrows(ArtifactNotFoundException.class, ()-> {
+        assertThrows(ObjectNotFoundException.class, ()-> {
             artifactService.update("1250808601744904192", update);
         });
 
@@ -222,7 +223,7 @@ class ArtifactServiceTest {
         given(artifactRepository.findById("1250808601744904192")).willReturn(Optional.empty());
 
         //When. Act on the target behaviour. Cover the methods to be tested
-        assertThrows(ArtifactNotFoundException.class, ()-> {
+        assertThrows(ObjectNotFoundException.class, ()-> {
             artifactService.deleteArtifact("1250808601744904192");
         });
         //Then. Assert expected outcomes
