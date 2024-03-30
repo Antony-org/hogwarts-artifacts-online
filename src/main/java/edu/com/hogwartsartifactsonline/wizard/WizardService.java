@@ -1,5 +1,7 @@
 package edu.com.hogwartsartifactsonline.wizard;
 
+import edu.com.hogwartsartifactsonline.artifact.Artifact;
+import edu.com.hogwartsartifactsonline.artifact.ArtifactRepository;
 import edu.com.hogwartsartifactsonline.artifact.utils.IdWorker;
 import edu.com.hogwartsartifactsonline.system.exception.ObjectNotFoundException;
 import jakarta.transaction.Transactional;
@@ -12,11 +14,11 @@ public class WizardService {
 
     private final WizardRepository wizardRepository;
 
-    private final IdWorker idWorker;
+    private final ArtifactRepository artifactRepository;
 
-    public WizardService(WizardRepository wizardRepository, IdWorker idWorker) {
+    public WizardService(WizardRepository wizardRepository, ArtifactRepository artifactRepository) {
         this.wizardRepository = wizardRepository;
-        this.idWorker = idWorker;
+        this.artifactRepository = artifactRepository;
     }
 
     public Wizard findById(Integer wizardId){
@@ -47,4 +49,19 @@ public class WizardService {
         foundWizard.removeAllArtifacts();
         this.wizardRepository.deleteById(wizardId);
     }
+
+    public void assignArtifact(Integer wizardId, String artifactId){
+        // Find wizard by ID from DB
+        Wizard wizard = this.wizardRepository.findById(wizardId)
+                .orElseThrow(() -> new ObjectNotFoundException("wizard", wizardId));
+        // Find artifact by ID from DB
+        Artifact artifact = this.artifactRepository.findById(artifactId)
+                .orElseThrow(() -> new ObjectNotFoundException("artifact", artifactId));
+        // Transfer artifact ownership
+        if (artifact.getOwner() != null) {
+            artifact.getOwner().removeArtifact(artifact);
+        }
+        wizard.addArtifact(artifact);
+    }
+
 }
