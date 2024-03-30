@@ -1,6 +1,7 @@
 package edu.com.hogwartsartifactsonline.wizard;
 
 import edu.com.hogwartsartifactsonline.artifact.Artifact;
+import edu.com.hogwartsartifactsonline.artifact.ArtifactRepository;
 import edu.com.hogwartsartifactsonline.artifact.utils.IdWorker;
 import edu.com.hogwartsartifactsonline.system.exception.ObjectNotFoundException;
 import org.junit.jupiter.api.AfterEach;
@@ -27,6 +28,9 @@ class WizardServiceTest {
 
     @Mock
     WizardRepository wizardRepository;
+
+    @Mock
+    ArtifactRepository artifactRepository;
 
     @Mock
     IdWorker idWorker;
@@ -255,6 +259,100 @@ class WizardServiceTest {
 
         //Then
         verify(this.wizardRepository, times(1)).findById(1);
+    }
+
+    @Test
+    void testAssignArtifactSuccess() {
+        //Given. Arrange inputs and targets. Define the behaviour of Mock object WizardRepository
+        Artifact artifact = new Artifact();
+        artifact.setId("1250808601744904191");
+        artifact.setName("Deluminator");
+        artifact.setDescription("A Deluminator is a device invented by Albus Dumbledore that resembles a cigarette lighter. It is used to remove or absorb (as well as return) the light from any light source to provide cover to the user.");
+        artifact.setImageUrl("ImageUrl");
+
+        Wizard w = new Wizard();
+        w.setId(1);
+        w.setName("Harry Potter");
+        w.addArtifact(artifact);
+
+        Wizard w2 = new Wizard();
+        w2.setId(2);
+        w2.setName("Neville Longbottom");
+
+        given(this.wizardRepository.findById(2)).willReturn(Optional.of(w2));
+        given(this.artifactRepository.findById("1250808601744904191")).willReturn(Optional.of(artifact));
+
+        //When
+        this.wizardService.assignArtifact(2, "1250808601744904191");
+
+        //Then
+        assertThat(artifact.getOwner().getId()).isEqualTo(2);
+        assertThat(w2.getArtifacts()).contains(artifact);
+        assertThat(w.getNumberOfArtifacts()).isEqualTo(0);
+        assertThat(w2.getNumberOfArtifacts()).isEqualTo(1);
+
+        verify(this.wizardRepository, times(1)).findById(2);
+        verify(this.artifactRepository, times(1)).findById("1250808601744904191");
+    }
+
+    @Test
+    void testAssignArtifactErrorWizardNotFound(){
+        //Given
+        Wizard w = new Wizard();
+        w.setName("Harry Potter");
+        w.setId(1);
+
+        Artifact artifact = new Artifact();
+        artifact.setId("1250808601744904191");
+        artifact.setName("Deluminator");
+        artifact.setDescription("A Deluminator is a device invented by Albus Dumbledore that resembles a cigarette lighter. It is used to remove or absorb (as well as return) the light from any light source to provide cover to the user.");
+        artifact.setImageUrl("ImageUrl");
+
+        w.addArtifact(artifact);
+
+        given(this.wizardRepository.findById(2)).willReturn(Optional.empty());
+        //given(this.artifactRepository.findById("1250808601744904191")).willReturn(Optional.of(artifact));
+
+        //When
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, ()-> {
+            this.wizardService.assignArtifact(2, "1250808601744904191");
+        });
+
+        //Then
+        assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                        .hasMessage("Could not find wizard with Id " + 2);
+
+        assertThat(artifact.getOwner().getId()).isEqualTo(1);
+        verify(this.wizardRepository, times(1)).findById(2);
+    }
+
+    @Test
+    void testAssignArtifactErrorArtifactNotFound(){
+        //Given
+        Wizard w = new Wizard();
+        w.setName("Harry Potter");
+        w.setId(1);
+
+        Wizard w2 = new Wizard();
+        w2.setId(2);
+        w2.setName("Neville Longbottom");
+
+        given(this.artifactRepository.findById("1250808601744904191")).willReturn(Optional.empty());
+        given(this.wizardRepository.findById(2)).willReturn(Optional.of(w2));
+
+        //When
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, ()-> {
+            this.wizardService.assignArtifact(2, "1250808601744904191");
+        });
+
+        //Then
+        assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find artifact with Id " + "1250808601744904191");
+
+        assertThat(w.getNumberOfArtifacts()).isEqualTo(0);
+        verify(this.wizardRepository, times(1)).findById(2);
     }
 
 }
